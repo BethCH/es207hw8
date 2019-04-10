@@ -1,0 +1,112 @@
+---
+title: "ECH_ES207HW8"
+author: "Beth Clifton Holcomb"
+date: "4/9/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. What is spurious correlation? What is a “lurking”" variable? Why should we worry about it in the context of predicting loads from concentrations? What is an example in your research where spurious correlation and/or lurking variables may be of concern?
+
+**Spurious Correlation** is a seemingly present correlation between two variables that are actually unrelated. There's a fantastic website that shows obsurd examples of this : http://tylervigen.com/page?page=1 . Though there are great examples like the graph of pool drownings vs Nicolas Cage movies, it can happen in environmental and ecological data. in these cases, it may be far more difficult to spot, which is the reason and extreme value of statistical tests
+
+**"Lurking" Variable** is a variable that may explain / hide the explainatory power of the relationship(s) between the independant and dependant variable(s). 
+
+Lurking variables can be an issue in predicting any variable because if the appropriate variables are not used/included to make the prediction (exluding lurking variables/including lurking variables) the predictioins may be inaccurate. the scale of error is determined by the power of a lurking variable.
+
+In my own research, I am far more concerned with spurious correlation than lurking variables. though they are both issues, i am trying to test the strength of the relationship between two bodies of literature that lack prior data. In this case, the interpretation of the resulting data could lead to a seemingly valuable relationship between sense of place and food sovereignty literature, when in reality the results may just follow similar trends without any causation or interdependence. Such concerns are valuable in assessing the validity of results. 
+
+## 2. Make a prediction about the outcome of this analysis. How will the results using C compare to those using L as the regression’s response variable?
+
+if L is calculated based on Q, the concern for spurious correlation is justifiable. i would imagine that data created using another data set would show corriliation to the foundation data set. the argument to use C instead of L to determine a relationship seems more sound. i would predict more variation between C and Q than would be found between L and Q.
+
+
+
+## 3. Provide two scatterplots using ggplot. The first should be discharge (Q) as the independent variable versus Load as the dependent variable. The second should be discharge (Q) as the independent variable versus Concentration as the dependent variable. Please make these plots publication quality. Make sure to provide 1) Good figure captions that describe what is graphed, include important experimental details, and match the graphic; 2)
+
+
+
+## 4. Write a function that calculates each of the above statistics, and returns a tibble that where the column heading is the model name, and each row is a statistic. Apply the function to both models.
+
+## 5. What is the conclusion to the controversy? Which model better makes a better predction? The model using Q as the dependent variable, or the model using C as the dependent variable. Explain your reasoning.
+
+## 6. Find some transformations for the above example which might improve on the natural log transformation for x and/or y. Obvious candidates include the ladder of power transformation, or log10. ’
+
+## 6a. What is a good transformation of Q to use in estimating L and C? What is a good transformation to use for L and C? Show evidence for your work. *Note! There is no “best” transformation, but there are some good ones.
+
+## 6b. Describe your preferred model and indicate some reasons you might be oncerned about it. What are steps you could take to improve this model in future work?
+
+## 6c. What does it tell you about Phosphorous transport in the Illinois River?
+
+
+## 7. Re-write the code as above, but use the piping function preferred by the tidyverse. Prove to me you get the same output.
+
+
+## 8. Using the indexing techniques for list columns, print for me the third number in the vector of log_PO4 from depth = 2, source = tile, percentile = 75.
+
+
+
+## 9. Write another function calculating the summary of the lm and map() mutate() it to add to the object psoil.nested. Call that item “lm.summary”. Show me your results and prove to me it works.
+
+
+## 10. Make some graphs that enable Dr. Duncan to visualize the results of the different regressions and compare the regression results for different depths, sources, and quantiles.
+
+## 11. What can you conclude about the ability of SRP to measure PO4? Make sure to address why Dr. Duncan divided her data into different quantiles for analysis, and how that influences the results. What are the limitations of the analysis?
+
+## 12. Often, we use regression to remove the primary effect of variation on a dataset, and then we examine the residuals for other effects. We dont have any other covariates to analyze in this dataset, so conduct a thought experiment. In a few sentences, outline for me the next steps in this analysis you would take to do such an exercise. Hint, see the “Model” chapter of R 4 Data Science to guide your answer.
+
+
+
+## 13. In 3-5 sentences, interpret these results for me. Check the documentation on the functions for assistance as needed.
+
+## 13. Given this information, if you had to select a single best predictor of CEC in topsoil, which variable would you select?
+
+## 14. Using tidyverse and the broom package, clean up the lm results from above. Make a summary table that has the following columns: r square; adjusted r square, sigma, statistic, p.value, df, logLik, AIC, BIC, deviance, df.residual. Each row should be each of the different linear models. Show your work.
+
+
+## 15. Using your answer from 14 and looking at the lm coefficients above, answer the above two questions. 1) How much explanation is gained by adding Clay? Is this a statistically signafigant increase? Support your answers with quantitative results.
+
+
+## 16. What is the adjusted R square of the 4 different lms?
+
+## 16. Define the AICc statistic. What is the function for calculating the AICc statistic in R?
+
+## 17. Find the AIC and the BIC of each of the 4 lm models. Make a side-by-side bar plot visualizing the AIC and BIC for each of the 4 models (so, x-axis = model, y-axis = test statistic value, color = test statistic type).
+
+## 18. Which of the 4 lms is best? Why?
+
+
+## 19. Plot the regression diagnostic plots, and the predicted (fitted) versus observed values for all 4 lms. For the diagnostic plots, use par(mfrow) and plot 4 diagnostic plots in a 2 x 2 grid. Include residuals vs fitted, normal q-q, scale-location, and residuals versus leverage.
+
+
+## 20. Given the results from the ANOVA and the proportional difference in the residual sum of the squares, as well as the visualizations, what is the probability that the difference in the models is due to chance? (Or, put another wasy, can we reject our null hypothesis that the extra information from the clay content does not really improve the model)? Explain your reasoning.
+
+
+## 21. Given the above results, should we eliminate any of the variables?
+
+
+## 21. Under what case is AIC most improved? Explain your reasoning. (Note - there is not one correct answer here).
+
+
+## 22. How much of the variation in subsoil clay is explained by the zone? By the topsoil clay? by both together? Is the combined model better than individual models? How much so?
+
+## 23. In the parallel regression model (topsoil clay and zone as predictors), what are the differences in the means between zones?
+
+## 24. What is the slope of the linear regression, after accounting for the zones? How does this compare with the slope of the linear regression not considering zones?
+
+## 25. Are all predictors in the combined model (topsoil clay and zone as predictors) significant? (Hint: look at the probability of the t-tests.)
+
+
+## 25. Plot these parellel regression lines
+
+## 25. Recompute the VIF, take each one out separately. Show the results.
+
+## 26. What is the best model to predict Clay 5? Why?
+
+
+
+
+
