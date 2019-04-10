@@ -27,6 +27,30 @@ if L is calculated based on Q, the concern for spurious correlation is justifiab
 
 ## 3. Provide two scatterplots using ggplot. The first should be discharge (Q) as the independent variable versus Load as the dependent variable. The second should be discharge (Q) as the independent variable versus Concentration as the dependent variable. Please make these plots publication quality. Make sure to provide 1) Good figure captions that describe what is graphed, include important experimental details, and match the graphic; 2)
 
+```{r}
+library(tidyverse)
+il_river <- read_csv("illinois_p.csv", col_names = TRUE, na = c("NA", "n/p", "n/a"), guess_max = 30000)
+il_river
+```
+
+```{r}
+# 
+require(tidyverse)
+d <- tibble(
+  Discharge = il_river$`Q`,
+  Load = il_river$`Load`)
+d <- na.omit(d)
+fit <- lm(Discharge~Load, data = d)
+d$predicted <- predict(fit)
+d$residuals <- residuals(fit)
+d %>% 
+  ggplot(aes(x = Discharge, y = Load)) +
+  theme_bw() +
+  geom_point(alpha = 0.2)
+```
+
+
+
 
 
 ## 4. Write a function that calculates each of the above statistics, and returns a tibble that where the column heading is the model name, and each row is a statistic. Apply the function to both models.
