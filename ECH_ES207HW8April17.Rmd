@@ -34,7 +34,6 @@ il_river
 ```
 
 ```{r}
-# 
 require(tidyverse)
 d <- tibble(
   Discharge = il_river$`Q`,
@@ -43,17 +42,86 @@ d <- na.omit(d)
 fit <- lm(Discharge~Load, data = d)
 d$predicted <- predict(fit)
 d$residuals <- residuals(fit)
-d %>% 
+a <- d %>% 
   ggplot(aes(x = Discharge, y = Load)) +
   theme_bw() +
-  geom_point(alpha = 0.2)
+  geom_point(alpha = 0.2) + labs(title = "Figure 1. Discharge to Load", caption = "This plot displays Stream Discharge compared to Phosphorous Load of 
+ the Illinois River. Because discharge is used to calculate load, there 
+ may be a misleading relationship between the two readings.")
+a
+```
+
+
+```{r}
+require(tidyverse)
+d <- tibble(
+  Discharge = il_river$`Q`,
+  Concentration = il_river$`Conc`)
+d <- na.omit(d)
+fit <- lm(Discharge~Concentration, data = d)
+d$predicted <- predict(fit)
+d$residuals <- residuals(fit)
+b <- d %>% 
+  ggplot(aes(x = Discharge, y = Concentration)) +
+  theme_bw() +
+  geom_point(alpha = 0.2) + labs(title = "Figure 2. Discharge to Concentration", caption = "This plot displays Stream Discharge compared to Phosphorous Concentration of the 
+Illinois River. Stream Discharge and Phosphorous concentration are measured seperately. Unlike 
+Figure 1, the indenpendence of these two variables reduces the liklihood of misleading through this plot.")
+b
+```
+
+```{r}
+# i'm not sure why this doesn't work
+par(mfrow = c(1,2)); plot(a); plot(b)
+```
+
+
+
+
+## 4. Write a function that calculates each of the above statistics, and returns a tibble that where the column heading is the model name, and each row is a statistic. Apply the function to both models.
+
+```{r}
+LvQ <- lm(log(Load)~log(Q), data = il_river)
+CvQ <- lm(log(Conc)~log(Q), data = il_river)
+summary(LvQ)
+```
+
+```{r}
+summary(CvQ)
+```
+
+```{r}
+require(modelr)
+dat <- il_river %>% 
+  spread_predictions(LvQ, CvQ)
+dat
+```
+
+```{r}
+dat.g <- dat %>% 
+  gather_predictions(LvQ, CvQ)
+head(dat.g)
+dat.r <- dat %>% 
+  spread_residuals(LvQ, CvQ)
+head(dat.r)
+```
+
+```{r}
+Load.scale <- function(Q, C){2.7*Q*C}
+dat$Load.fromC <- Load.scale(dat$Q, exp(dat$CvQ))
+dat
+```
+
+```{r}
+ggplot(dat, aes(x = Load, y = exp(LvQ))) + geom_point(alpha = 0.2) + 
+  stat_smooth(method = "lm", se = F) + geom_abline(linetype = "dashed")
 ```
 
 
 
 
 
-## 4. Write a function that calculates each of the above statistics, and returns a tibble that where the column heading is the model name, and each row is a statistic. Apply the function to both models.
+
 
 ## 5. What is the conclusion to the controversy? Which model better makes a better predction? The model using Q as the dependent variable, or the model using C as the dependent variable. Explain your reasoning.
 
