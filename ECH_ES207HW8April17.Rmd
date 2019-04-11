@@ -77,9 +77,6 @@ par(mfrow = c(1,2)); plot(a); plot(b)
 
 
 
-
-## 4. Write a function that calculates each of the above statistics, and returns a tibble that where the column heading is the model name, and each row is a statistic. Apply the function to both models.
-
 ```{r}
 LvQ <- lm(log(Load)~log(Q), data = il_river)
 CvQ <- lm(log(Conc)~log(Q), data = il_river)
@@ -118,6 +115,30 @@ ggplot(dat, aes(x = Load, y = exp(LvQ))) + geom_point(alpha = 0.2) +
 ```
 
 
+
+## 4. Write a function that calculates each of the above statistics, and returns a tibble that where the column heading is the model name, and each row is a statistic. Apply the function to both models.
+
+**Come back to this!! It's not finished**
+
+```{r}
+a <- tibble(
+  Load = dat$Load,
+  Concentration = dat$Conc)
+a <- na.omit(a)
+a$RMSE_LvQ <- rmse(LvQ, dat)
+a$MAE_LvQ <- mae(LvQ, dat)
+a$RMSE_LvQfit <- predict(fit)
+a$MAE1_LvQfit <- residuals(fit)
+a$RMSE_CvQ <- rmse(CvQ, dat)
+a$MAE_CvQ <- mae(CvQ, dat)
+a$RMSE_CvQfit <- predict(fit)
+a$MAE_CvQfit <- residuals(fit)
+# a %>% 
+#  ggplot(aes(x = Turbidity, y = SecchiDepth)) +
+#  theme_bw() +
+#  geom_point(alpha = 0.2)
+head(a)
+```
 
 
 
