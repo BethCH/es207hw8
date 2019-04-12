@@ -118,9 +118,21 @@ ggplot(dat, aes(x = Load, y = exp(LvQ))) + geom_point(alpha = 0.2) +
 
 ## 4. Write a function that calculates each of the above statistics, and returns a tibble that where the column heading is the model name, and each row is a statistic. Apply the function to both models.
 
+Function = calculates MAE and RMSE for 2 models (LvQ & CvQ) & make a tibble
+
+MAE = mae(model, data)
+RMSE = rmse(model, data)
+
+both models = 1) LvQ 2) CvQ
+LvQ = log(Load)~log(Q)
+CvQ = log(Conc)~log(Q)
+
+
 **Come back to this!! It's not finished**
 
 ```{r}
+LvQ <- lm(log(Load)~log(Q), data = il_river)
+CvQ <- lm(log(Conc)~log(Q), data = il_river)
 a <- tibble(
   Load = dat$Load,
   Concentration = dat$Conc)
@@ -133,10 +145,6 @@ a$RMSE_CvQ <- rmse(CvQ, dat)
 a$MAE_CvQ <- mae(CvQ, dat)
 a$RMSE_CvQfit <- predict(fit)
 a$MAE_CvQfit <- residuals(fit)
-# a %>% 
-#  ggplot(aes(x = Turbidity, y = SecchiDepth)) +
-#  theme_bw() +
-#  geom_point(alpha = 0.2)
 head(a)
 ```
 
@@ -146,14 +154,122 @@ head(a)
 
 ## 5. What is the conclusion to the controversy? Which model better makes a better predction? The model using Q as the dependent variable, or the model using C as the dependent variable. Explain your reasoning.
 
+For a linear model, the Load seems to fit better considering the R-squared value and p-value. considering the intercepts, the Load vs. Q all sits on the same side of zero. I am very suspicious of supporting the Load model but just using the available numbers, it seems the better fit.  
+
 ## 6. Find some transformations for the above example which might improve on the natural log transformation for x and/or y. Obvious candidates include the ladder of power transformation, or log10. ’
+
+```{r}
+b <- ggplot(dat, aes(x = log(dat$Load), y = dat$Q)) +
+  theme_bw() + geom_point(alpha = 0.2)
+b
+```
+
+```{r}
+c <- ggplot(dat, aes(x = log(dat$Q), y = dat$Load)) +
+  theme_bw() + geom_point(alpha = 0.2)
+c
+```
+
+```{r}
+c <- ggplot(dat, aes(x = log(Q), y = log(Load))) + 
+  theme_bw() + geom_point(alpha = 0.2)
+c
+```
+
+https://rdrr.io/cran/rcompanion/man/transformTukey.html
+```{r}
+library(rcompanion)
+transformTukey(dat$Q, start = 0, end = 100, int = 10,
+  plotit = TRUE, verbose = FALSE, quiet = FALSE, statistic = 1,
+  returnLambda = FALSE)
+```
+
+```{r}
+transformTukey(dat$LvQ, start = -10, end = 10, int = 0.025,
+  plotit = TRUE, verbose = FALSE, quiet = FALSE, statistic = 1,
+  returnLambda = FALSE)
+```
+
+```{r}
+transformTukey(dat$CvQ, start = -10, end = 10, int = 0.025,
+  plotit = TRUE, verbose = FALSE, quiet = FALSE, statistic = 1,
+  returnLambda = FALSE)
+```
+
+```{r}
+transformTukey(dat$Q, start = -10, end = 10, int = 0.025,
+  plotit = TRUE, verbose = FALSE, quiet = FALSE, statistic = 1,
+  returnLambda = FALSE)
+```
+
+
+```{r}
+library(gridExtra)
+a1 <- qplot(x = CvQ, data = dat, binwidth = .025)
+b1 <- qplot(x = log10(CvQ + 1), data = dat, binwidth = .025)
+c1 <- qplot(x = sqrt(CvQ + 1), data = dat, binwidth = .025)
+
+grid.arrange(a1, b1, c1, nrow = 1)
+```
+
+```{r}
+library(gridExtra)
+a2 <- qplot(x = LvQ, data = dat, binwidth = .025)
+b2 <- qplot(x = log10(LvQ + 1), data = dat, binwidth = .025)
+c2 <- qplot(x = sqrt(LvQ + 1), data = dat, binwidth = .025)
+
+grid.arrange(a1, b1, c1, nrow = 1)
+```
+
 
 ## 6a. What is a good transformation of Q to use in estimating L and C? What is a good transformation to use for L and C? Show evidence for your work. *Note! There is no “best” transformation, but there are some good ones.
 
+The transformations visualized in the previous question and sampled below indicate the transformTukey command transforms the data to a normal distribution in both CvQ and LvQ as well as Q on its own. The results for the Tukey tranform were far closer to normally distributed than for the log10 tranformation. the square root tranformation was not useful in any of the variables.
+
+```{r}
+transformTukey(dat$Q, start = -10, end = 10, int = 0.025,
+  plotit = TRUE, verbose = FALSE, quiet = FALSE, statistic = 1,
+  returnLambda = FALSE)
+```
+
+```{r}
+a2
+```
+
+
+
 ## 6b. Describe your preferred model and indicate some reasons you might be oncerned about it. What are steps you could take to improve this model in future work?
+
+
+
 
 ## 6c. What does it tell you about Phosphorous transport in the Illinois River?
 
+
+
+
+PO4 covaries with P (SRP)
+SRP analysis can overestimate PO$
+
+** Determine how much variation in PO4 is explained by SRP
+** variables: SRP @ 25th, 50th, 75th, 9th %ile
+              max concentration events 
+              log transformed Mehicle 3 values for phosphorus columns for 3 depths
+              
+** obejective: regress the PO4 Column (by: %ile to source / %ile to surface runoff / %ile to tile drainage) against log transformed soil test P for each depth
+1. %ile to source vs P 0-2in depth
+2. %ile to source vs P 0-4in depth
+3. %ile to source vs P 0-8in depth
+4. &ile to surface runoff vs 3 P options
+5. %ile to tile drainage vs 3 P options
+** data: Event_data_log.xlsx
+
+```{r}
+library(tidyverse)
+library(readxl)
+psoil <- read_excel("Event_data_log.xlsx")
+psoil
+```
 
 ## 7. Re-write the code as above, but use the piping function preferred by the tidyverse. Prove to me you get the same output.
 
