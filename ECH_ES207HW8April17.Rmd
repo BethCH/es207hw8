@@ -268,40 +268,320 @@ SRP analysis can overestimate PO$
 library(tidyverse)
 library(readxl)
 psoil <- read_excel("Event_data_log.xlsx")
-psoil
+head(psoil)
 ```
+
+```{r}
+psoil.g <- gather(psoil, key = "depth", value = "soiltest", log_0_2, log_0_4, log_0_8)
+head(psoil.g)
+```
+
 
 ## 7. Re-write the code as above, but use the piping function preferred by the tidyverse. Prove to me you get the same output.
 
 
+
+
+```{r}
+library(tidyverse)
+psoil %>% gather(key = "depth", value = "soiltest", log_0_2, log_0_4, log_0_8)
+head(psoil)
+```
+
+```{r}
+psoil[45,]
+```
+
+
+```{r}
+psoil.g[45,]
+```
+
+
+```{r}
+psoil.g$depth <- substr(psoil.g$depth, start = 7, stop = 7)
+psoil.g
+```
+
+```{r}
+ggplot(psoil.g, aes(x = soiltest, y = log_PO4, color = percentile)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(source~depth)
+```
+
+```{r}
+psoil.nested <- psoil.g %>% 
+  group_by(depth, source, percentile) %>% 
+  nest()
+psoil.nested
+```
+
+```{r}
+psoil.nested$data[1]
+```
+
+
+
 ## 8. Using the indexing techniques for list columns, print for me the third number in the vector of log_PO4 from depth = 2, source = tile, percentile = 75.
 
+```{r}
+# print the log_PO4 for depth = 2, source - tile, precentile = 75
+psoil.nested[[4]][8]
+```
+
+```{r}
+psoil.nested$data[4][8][3]
+```
+
+```{r}
+st_vs_po4 <- function(df) {
+  lm(log_PO4 ~ soiltest, data = df)
+}
+st_vs_po4(psoil.nested[[1, "data"]])
+```
+
+```{r}
+psoil.nested <- psoil.nested %>% 
+   mutate(lm.fit = map(data, st_vs_po4))
+psoil.nested
+```
+
+```{r}
+psoil.nested$lm.fit[1]
+```
 
 
 ## 9. Write another function calculating the summary of the lm and map() mutate() it to add to the object psoil.nested. Call that item “lm.summary”. Show me your results and prove to me it works.
 
+```{r}
+st_vs_po4_2 <- function(df) {
+  summary(lm(log_PO4 ~ soiltest, data = df))
+}
+st_vs_po4(psoil.nested[[1, "data"]])
+```
+
+```{r}
+psoil.nested <- psoil.nested %>% 
+   mutate(lm.summary = map(data, st_vs_po4_2))
+psoil.nested
+```
+
+```{r}
+psoil.nested$lm.summary[1]
+```
+
+```{r}
+require(broom)
+psoil.nested <- psoil.nested %>% 
+  mutate(lm.coeffs = map(lm.fit, tidy)) %>% 
+  mutate(lm.stats = map(lm.summary, glance))
+psoil.nested
+```
+
+```{r}
+psoil.nested$lm.stats[[1]]
+```
+
+```{r}
+psoil.stats <- psoil.nested %>% 
+  dplyr::select(depth, source, percentile, lm.stats) %>% 
+  unnest(lm.stats)
+psoil.stats
+```
+
+```{r}
+psoil.coeffs <- psoil.nested %>% 
+  dplyr::select(depth, source, percentile, lm.coeffs) %>% 
+  unnest(lm.coeffs)
+psoil.coeffs
+```
+
+
 
 ## 10. Make some graphs that enable Dr. Duncan to visualize the results of the different regressions and compare the regression results for different depths, sources, and quantiles.
 
+```{r}
+library(ggplot2)
+ggplot(psoil.coeffs, aes(x = estimate, y = statistic, color = percentile)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(source~depth)
+```
+
+```{r}
+library(ggplot2)
+ggplot(psoil.coeffs, aes(x = estimate, y = std.error, color = percentile)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(source~depth)
+```
+
+```{r}
+library(ggplot2)
+ggplot(psoil.stats, aes(x = r.squared, y = statistic, color = percentile)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(source~depth)
+```
+
+```{r}
+library(ggplot2)
+ggplot(psoil.stats, aes(x = r.squared, y = sigma, color = percentile)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(source~depth)
+```
+
+```{r}
+library(ggplot2)
+ggplot(psoil.stats, aes(x = r.squared, y = p.value, color = percentile)) + geom_point() + geom_smooth(method = "lm") + facet_wrap(source~depth)
+```
+
+
 ## 11. What can you conclude about the ability of SRP to measure PO4? Make sure to address why Dr. Duncan divided her data into different quantiles for analysis, and how that influences the results. What are the limitations of the analysis?
 
+considering the very small p-values and the low standard errors, the results indicate SRP measures PO4 fairly well. There are also indicators of linear relationships in some of the graphs. Comparing the quantiles, there's more information which could lead to more accuracy in the interpretation of data. the standard errors for the 50th percentile, or the middle point of the measurements, are the lowest as are the p-values (even though they are all super low). if the data had only been single points, instead of quantiles, there would not be variation. Each reading would only be a single point, roughly the 50th percentile point. This loss of sensitivity at each depth would mean the loss of range for each depth and location. Though the quantiles provide more detail, the analysis is only as strong as the data. there are also limitations in that in some of the estimates have substantially higher than ideal standard errors and the resulting statistic for the intercept of the estimates match in patern and linear expression to the qunatile soiltests but i cannot conclusively say that the results are conclusive. 
+
+
 ## 12. Often, we use regression to remove the primary effect of variation on a dataset, and then we examine the residuals for other effects. We dont have any other covariates to analyze in this dataset, so conduct a thought experiment. In a few sentences, outline for me the next steps in this analysis you would take to do such an exercise. Hint, see the “Model” chapter of R 4 Data Science to guide your answer.
+
+Analyzing the data results from a single mutation is a great place to start but the data interpretation takes many more steps. Chapter 18 in Wickham & Grolemund discuss the value and application of taking the data and applying a family of models in, for example the linear models, to determine the best fitting model. Once the best fitting model is determined, which is done by finding the model with the least distance between the data points and the model, the specific model can be applied to the data. the results from this application include residuals and outliers which are to be analyzed. the residuals tell just how well a model fits. after the model is selected, relationships and interactions in the data are then analyzed. These next steps go into assessing the approporiatness of appling tranformations within the model. the results should be a model that best describes the behavior in the data. if that is not the result, the model is bad. 
+
+
+streamflow -> concentration
+x & y & z & a & q -> groundwater contamination 
+
+147 soild profile observations
+1.Clay = clay content - weight % of the mineral fine earth (<2 mm)
+
+2.CEC = cation exchange capacity - cmol+/(kg soil) - controls leaching
+
+3.OC = organic carbon - volume % of the fine earth
+
+4.e & n = Earth and NOrth UTM Coordinates (UTM Zone 32N, WGS 84 in meters)
+
+5.elev = elevation in meters
+
+6.zone = Agro-ecological zone
+
+7.wrb1 = Reference soil group
+
+8.LC = land cover type
+
+```{r}
+soil <- read_csv("cameroon_soil.csv")
+soil
+```
+
+```{r}
+pairs(~Clay1 + OC1 + CEC1, data = soil)
+```
+
+```{r}
+topsoil <- dplyr::select(soil, CEC1, Clay1, OC1)
+cov(topsoil)
+```
+
+```{r}
+cor(topsoil)
+```
+
+
 
 
 
 ## 13. In 3-5 sentences, interpret these results for me. Check the documentation on the functions for assistance as needed.
 
+Starting with the visualization of the data, there seems to be a linear relationship in each of the sets worth further investigation. Assessing the covariation between the variables, there's varying interpretations avaiable in the text and through online resources as to what exactly the high cov results indicate but there is clear concensus that the large positive numbers indicate high covariance. This is also supported by the 194.2 results for the Clay1 to Clay1 though not so with the OC1 to OC1. As for the correlation, the Clay1 and CEC1 have the lowest correlation with .557 but each of the results align with the conclusions of the visual interpretation that there are relationships between each of the pairs of variables. 
+
+
+
+cor (CEC1 to OC1) = .74
+cor (CEC1 to Clay1) = .55
 ## 13. Given this information, if you had to select a single best predictor of CEC in topsoil, which variable would you select?
 
+OC1 has higher correlation results and more focused visual linear relationship with CEC than the Clay1 variable. After controlling for residuals, the strength of the argument for using OC rather than Clay is strengthened. I would use the OC1.
+
+
+
+```{r}
+fit1 <- ggplot(topsoil, aes(x = Clay1, y = CEC1)) + 
+  geom_point() + 
+  geom_hline(yintercept=mean(topsoil$CEC1)) + 
+  geom_vline(xintercept=mean(topsoil$Clay1)) +
+  ylab("Percent Clay") +
+  xlab("CEC cmol+/(kg soil)") +
+  ggtitle("Clay vs. CEC at 0-10 cm")
+fit2 <- ggplot(topsoil, aes(x = residuals(lm(CEC1~OC1, data = topsoil)), y = residuals(lm(Clay1~OC1, data = topsoil)))) + 
+  geom_point() + 
+  geom_hline(yintercept=mean(residuals(lm(CEC1~OC1, data = topsoil)))) + 
+  geom_vline(xintercept=mean(residuals(lm(Clay1~OC1, data = topsoil)))) +
+  ylab("Residuals, % Clay vs. % OC") +
+  xlab("Residuals, CEC vs. OC") +
+  ggtitle("Partial Corr. of Clay vs. CEC \n after correcting for OC")
+```
+
+```{r}
+library(cowplot)
+plot_grid(fit1, fit2, labels = "AUTO")
+```
+
+```{r}
+library(ppcor)
+pcor(topsoil, method = "pearson")
+```
+
+```{r}
+library(ppcor)
+pcor(topsoil, method = "kendall")
+```
+
+```{r}
+library(corrplot)
+mycor <- cor(topsoil)
+corrplot(mycor, method = "number")
+```
+
+```{r}
+lm.null <- lm(CEC1 ~ 1, data = topsoil); summary(lm.null)
+```
+
+```{r}
+lm.cec.oc <- lm(CEC1 ~ OC1, data = topsoil); summary(lm.cec.oc)
+```
+
+```{r}
+lm.cec.clay <- lm(CEC1 ~ Clay1, data = topsoil); summary(lm.cec.clay)
+```
+
+```{r}
+lm.cec.clay.oc <- lm(CEC1 ~ Clay1 + OC1, data = topsoil); summary(lm.cec.clay.oc)
+```
+
 ## 14. Using tidyverse and the broom package, clean up the lm results from above. Make a summary table that has the following columns: r square; adjusted r square, sigma, statistic, p.value, df, logLik, AIC, BIC, deviance, df.residual. Each row should be each of the different linear models. Show your work.
+
+```{r}
+lm.null <- lm(CEC1 ~ 1, data = topsoil); summary(lm.null)
+lm.cec.oc <- lm(CEC1 ~ OC1, data = topsoil); summary(lm.cec.oc)
+lm.cec.clay <- lm(CEC1 ~ Clay1, data = topsoil); summary(lm.cec.clay)
+lm.cec.clay.oc <- lm(CEC1 ~ Clay1 + OC1, data = topsoil); summary(lm.cec.clay.oc)
+```
+
+
+```{r}
+glance(lm.null)
+```
+
+```{r}
+ts.models <- bind_rows(list(lm.null = glance(lm.null), lm.cec.oc = glance(lm.cec.oc), lm.cec.clay =glance(lm.cec.clay), lm.cec.clay.oc = glance(lm.cec.clay.oc)), .id = "id")
+ts.models
+```
 
 
 ## 15. Using your answer from 14 and looking at the lm coefficients above, answer the above two questions. 1) How much explanation is gained by adding Clay? Is this a statistically signafigant increase? Support your answers with quantitative results.
 
+In comparing the lm.cec.oc to the lm.cec.clay results to each other, there is substantially less value to the .clay results compared to the .oc results. the r2 and adjusted r2 values support the value of the .oc results more vigorously than the .clay results. As do the test statistics and the p-values. With the addition of clay to the last tests, lm.cec.clay.oc, these results mirror those of the lm.cec.oc indicating little change with the additional variable. with the independent results between .oc and .clay and the supporting evidence when .clay is added to the .oc, it is apparent that clay plays a minimal role in clay's statistical value.  
 
 ## 16. What is the adjusted R square of the 4 different lms?
 
+```{r}
+ts.models[,3]
+```
+
+lm.null = 0.0
+lm.cec.oc = .5489
+lm.cec.clay = .3066
+lm.cec.oc.clay = .5662
+
 ## 16. Define the AICc statistic. What is the function for calculating the AICc statistic in R?
+
+
 
 ## 17. Find the AIC and the BIC of each of the 4 lm models. Make a side-by-side bar plot visualizing the AIC and BIC for each of the 4 models (so, x-axis = model, y-axis = test statistic value, color = test statistic type).
 
@@ -337,5 +617,6 @@ psoil
 
 
 
+GO BACK TO: 6B, 6C, 8, 14
 
 
