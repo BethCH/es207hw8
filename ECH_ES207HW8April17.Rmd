@@ -564,16 +564,29 @@ ts.models
 ```
 
 
+
+```{r}
+lms <- list(null=lm.null, cec.clay = lm.cec.clay, cec.oc = lm.cec.oc, cec.clay.oc = lm.cec.clay.oc)
+lms.coeffs <- lapply(lms, tidy)
+lms.coeffs
+```
+
 ## 15. Using your answer from 14 and looking at the lm coefficients above, answer the above two questions. 1) How much explanation is gained by adding Clay? Is this a statistically signafigant increase? Support your answers with quantitative results.
 
 In comparing the lm.cec.oc to the lm.cec.clay results to each other, there is substantially less value to the .clay results compared to the .oc results. the r2 and adjusted r2 values support the value of the .oc results more vigorously than the .clay results. As do the test statistics and the p-values. With the addition of clay to the last tests, lm.cec.clay.oc, these results mirror those of the lm.cec.oc indicating little change with the additional variable. with the independent results between .oc and .clay and the supporting evidence when .clay is added to the .oc, it is apparent that clay plays a minimal role in clay's statistical value.  
+
+```{r}
+lms.coeffs.notalist <- Map(cbind, lms.coeffs, model = names(lms))
+lms.coeffs.notalist <- bind_rows(lms.coeffs.notalist)
+lms.coeffs.notalist
+```
 
 ## 16. What is the adjusted R square of the 4 different lms?
 
 ```{r}
 ts.models[,3]
 ```
-
+Adjusted R2:
 lm.null = 0.0
 lm.cec.oc = .5489
 lm.cec.clay = .3066
@@ -581,14 +594,106 @@ lm.cec.oc.clay = .5662
 
 ## 16. Define the AICc statistic. What is the function for calculating the AICc statistic in R?
 
+AICc is the second order AIC or Alaike's Information criterion. AIC is the maximum liklihood fit of a model considering overall fit and number of parameters. AIC is typically used, unless there is a very low number of samples in which case the AICc is used. 
 
+Function:
+AICc(mod, return.K = FALSE, second.ord = TRUE, nobs = NULL, …)
+
+Source: https://www.rdocumentation.org/packages/AICcmodavg/versions/2.2-1/topics/AICc
 
 ## 17. Find the AIC and the BIC of each of the 4 lm models. Make a side-by-side bar plot visualizing the AIC and BIC for each of the 4 models (so, x-axis = model, y-axis = test statistic value, color = test statistic type).
 
+```{r}
+ts.models[,9:10]
+```
+
+```{r}
+library(ggplot2)
+library(reshape2)
+AIC <- ts.models$AIC
+BIC <- ts.models$BIC
+id <- ts.models$id
+df1 <- data.frame(AIC, BIC, id)
+df1
+df2 <- melt(df1, id.vars = 'id')
+df2
+ggplot(df2, aes(x = id, y = value, fill = variable)) + geom_bar(stat = 'identity', position = 'dodge', colour = "black") + theme(axis.text.x = element_text(angle = -35))
+```
+
+Source: https://stackoverflow.com/questions/42820677/ggplot-bar-plot-side-by-side-using-two-variables
+
 ## 18. Which of the 4 lms is best? Why?
+
+The lm.cec.clay.oc has the lowest of both AIC and BIC but it is only slightly lower than the lm.cec.oc. With the other information, i would feel far more comfortable using the lm.cec.oc as the best because clay has such a low impact. 
+
+
+
+```{r}
+a <- anova(lm.cec.clay.oc, lm.cec.clay)
+a
+```
+```{r}
+diff(a$RSS)/a$RSS
+```
+
+```{r}
+b <- anova(lm.cec.clay.oc, lm.cec.oc)
+b
+```
+
+```{r}
+diff(b$RSS)/(b$RSS)
+```
+
+```{r}
+ts.anovas <- bind_rows(list(a,b))
+ts.anovas
+```
 
 
 ## 19. Plot the regression diagnostic plots, and the predicted (fitted) versus observed values for all 4 lms. For the diagnostic plots, use par(mfrow) and plot 4 diagnostic plots in a 2 x 2 grid. Include residuals vs fitted, normal q-q, scale-location, and residuals versus leverage.
+
+```{r}
+lm1 <- lm(CEC1 ~ 1, data = topsoil)
+#lm.null
+lm2 <- lm(CEC1 ~ OC1, data = topsoil)
+#lm.cec.oc
+lm3 <- lm(CEC1 ~ Clay1, data = topsoil)
+#lm.cec.clay
+lm4 <- lm(CEC1 ~ Clay1 + OC1, data = topsoil) 
+#lm.cec.clay.oc
+```
+
+```{r}
+# plot the 4 diagnostics for lm.null
+par(mfrow = c(2,2));
+plot(lm1, which = 1) + plot(lm1, which = 2) + plot(lm1, which = 3) + plot(lm1, which = 4)
+```
+
+```{r}
+lm.plots <- function(x){
+  par(mfrow = c(2,2));
+plot(x, which = 1) + plot(x, which = 2) + plot(x, which = 3) + plot(x, which = 4)
+}
+#lm.null
+lm.plots(lm1)
+```
+
+```{r}
+#lm.cec.oc
+lm.plots(lm2)
+```
+
+```{r}
+#lm.cec.clay
+lm.plots(lm3)
+```
+
+```{r}
+#lm.cec.clay.oc
+lm.plots(lm4)
+```
+
 
 
 ## 20. Given the results from the ANOVA and the proportional difference in the residual sum of the squares, as well as the visualizations, what is the probability that the difference in the models is due to chance? (Or, put another wasy, can we reject our null hypothesis that the extra information from the clay content does not really improve the model)? Explain your reasoning.
@@ -617,6 +722,6 @@ lm.cec.oc.clay = .5662
 
 
 
-GO BACK TO: 6B, 6C, 8, 14
+GO BACK TO: 6B, 6C, 8, 14, 19
 
 
