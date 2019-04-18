@@ -240,10 +240,16 @@ a2
 
 ## 6b. Describe your preferred model and indicate some reasons you might be oncerned about it. What are steps you could take to improve this model in future work?
 
+I prefer the CvQ model for quality sake. The models currently result in LvQ being a better fit but from a quality assessment, i do not trust that the variables are independent enough from each other to make qualitiy results. Because the models indicate LvQ a better fit, the CvQ model should be evaluated and modified to reach a better fit for predictions before it is used. This may include additional factors in the model or a non-normal model. 
 
 
 
+** come back to this
 ## 6c. What does it tell you about Phosphorous transport in the Illinois River?
+
+This lesson is difficult because i'm still learning how to interprete results from different models. it seems that Phosphorous is low and there are individual points of high concentration which seem to be resulting in issues in the model. But, these seemingly outlying events in concentration are not seen in the load as much. I'm not really sure what i'm being told about Phosphorous transport from this data. 
+
+
 
 
 
@@ -323,12 +329,15 @@ psoil.nested$data[1]
 ## 8. Using the indexing techniques for list columns, print for me the third number in the vector of log_PO4 from depth = 2, source = tile, percentile = 75.
 
 ```{r}
-# print the log_PO4 for depth = 2, source - tile, precentile = 75
+# print the log_PO4 for depth = 2, source = tile, precentile = 75
 psoil.nested[[4]][8]
+psn <- psoil.nested[[4]][8]
+psn
 ```
 
 ```{r}
-psoil.nested$data[4][8][3]
+# i dont know why this doesn't work
+#psn[2,3]
 ```
 
 ```{r}
@@ -698,30 +707,122 @@ lm.plots(lm4)
 
 ## 20. Given the results from the ANOVA and the proportional difference in the residual sum of the squares, as well as the visualizations, what is the probability that the difference in the models is due to chance? (Or, put another wasy, can we reject our null hypothesis that the extra information from the clay content does not really improve the model)? Explain your reasoning.
 
+```{r}
+ts.models
+```
+
+```{r}
+ts.anovas
+```
+
+Considering the AIC, the BIC, and the anova results, the null must be rejected. There is a slightly significant (.01) partial f test and both AIC and BIC are lower for the model that included clay. While the model analysis showed very similar results between the model that did include clay with the model that did not include clay, there is enough evidence that the mild difference is enough to include clay. I am very skeptical of this conclusion but using the information i have gathered so far between analysis and information on analysis interpretation, i cannot not reject the null. 
+
 
 ## 21. Given the above results, should we eliminate any of the variables?
+
+looking at the AIC values, the clay variable heavily increases AIC when it is removed to the model. OC1 and OC2 removal in the last iteration has seemingly little impact and I would feel confident in investigating the value in removing those two variables. Clay1 is a similar scenario.
+
+
+
+```{r}
+lms <- step(lm(Clay5 ~ Clay1 + CEC1 + OC1 + Clay2 + CEC2 + OC2, data = soil))
+```
+
 
 
 ## 21. Under what case is AIC most improved? Explain your reasoning. (Note - there is not one correct answer here).
 
+Comparing the start AIC to the variation in each model, the first (Clay5 ~ Clay1 + CEC1 + Clay2 + CEC2 + OC2) has the least variation with the 420.7 as the start and 501.33 as the AIC when Clay2 is removed. This model also has the lowerst AIC when Clay2 is removed which leads me to believe that though the variables discussed in the previous question may be removed without much diviation from quality, there may still be a bit of value for these variables. 
+
+
+
+```{r}
+soil$zone <- as.factor(soil$zone)
+lm5z <- lm(Clay5 ~ zone, data = soil); summary (lm5z)
+lm51 <- lm(Clay5 ~ Clay1, data = soil); summary(lm51)
+lm5z1 <- lm(Clay5 ~ zone + Clay1, data = soil); summary(lm5z1)
+```
 
 ## 22. How much of the variation in subsoil clay is explained by the zone? By the topsoil clay? by both together? Is the combined model better than individual models? How much so?
 
+Zone explains roughly 50% (.5126) of the variation in subsoil clay.
+Topsoil clay explains roughly 80% (.8047) of the variation in subsoil clay.
+The combined model explains roughly 83% (.8296) of the variation in but that is only 2% higher than the topsoil model alone. This starting point of model assessment does not support a conclusive dicision on the quality of the model. further investigation would be needed to make that decision.
+
 ## 23. In the parallel regression model (topsoil clay and zone as predictors), what are the differences in the means between zones?
+
+the maximum difference between zones is almost 6. The highest is 5.694 and the lowest is -.659
+
+the difference between zone 2 and 3 = 3.444
+the difference between zone 3 and 4 = 1.592
+the difference between zome 2 and 4 = 5.035
+
+
 
 ## 24. What is the slope of the linear regression, after accounting for the zones? How does this compare with the slope of the linear regression not considering zones?
 
+when considering zone, the slope of the line combination of estimates for each of zones and clay1. with this in mind, the slope is 2.335. this linear model would correct for the up and own curvature that would be expressed for each of the variable slopes interpreted through each of the estimates. 
+
+when removing the consideration of zones, the slope of the line for clay1 is .82891. 
+
+these slopes vary heavy from one another indicating they are diversly different linear models of the data. because of this deviation, these two models would need to be considered against eachother and with other variables to assess their overall value.
+
+
 ## 25. Are all predictors in the combined model (topsoil clay and zone as predictors) significant? (Hint: look at the probability of the t-tests.)
+
+Clay1 and zone2 are significantly smaller than 1. zone 3 is smaller but not significantly so and zone4 does not indicate any significance as a predictor. 
+
+
+
+```{r}
+stem(residuals(lm5z1))
+res.low <- which(residuals(lm5z1) < -12)
+res.high <- which(residuals(lm5z1) > 9)
+soil[res.low,]
+```
+
+```{r}
+soil[res.high,]
+```
+
+```{r}
+predict(lm5z1)[res.low]
+```
+
+```{r}
+predict(lm5z1)[res.high]
+```
+
 
 
 ## 25. Plot these parellel regression lines
+
+```{r}
+lm5z <- lm(Clay5 ~ zone, data = soil)
+lm51 <- lm(Clay5 ~ Clay1, data = soil)
+lm5z1 <- lm(Clay5 ~ zone + Clay1, data = soil)
+```
+
+```{r}
+plot(Clay5 ~ zone, data = soil)
+abline(lm5z)
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(soil, aes(x = zone, y = Clay5)) + 
+  geom_point(shape = 1) + 
+  geom_smooth(method = lm)
+```
+
+
+
 
 ## 25. Recompute the VIF, take each one out separately. Show the results.
 
 ## 26. What is the best model to predict Clay 5? Why?
 
 
-
-GO BACK TO: 6B, 6C, 8, 14, 19
 
 
