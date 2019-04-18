@@ -809,6 +809,19 @@ abline(lm5z)
 ```
 
 ```{r}
+plot(Clay5 ~ Clay1, data = soil)
+abline(lm51)
+```
+
+```{r}
+plot(Clay5 ~ zone + Clay1, data = soil)
+abline(lm5z1)
+```
+
+
+
+
+```{r}
 library(ggplot2)
 
 ggplot(soil, aes(x = zone, y = Clay5)) + 
@@ -816,13 +829,57 @@ ggplot(soil, aes(x = zone, y = Clay5)) +
   geom_smooth(method = lm)
 ```
 
+```{r}
+library(ggplot2)
+
+ggplot(soil, aes(x = Clay1, y = Clay5)) + 
+  geom_point(shape = 1) + 
+  geom_smooth(method = lm)
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(soil, aes(x = zone + Clay1, y = Clay5)) + 
+  geom_point(shape = 1) + 
+  geom_smooth(method = lm)
+```
+
+
+
+
+```{r}
+library(car)
+vif(lm(Clay5 ~ Clay1 + CEC1 + OC1 + Clay2 + CEC2 + OC2, data=soil))
+```
 
 
 
 ## 25. Recompute the VIF, take each one out separately. Show the results.
 
-## 26. What is the best model to predict Clay 5? Why?
+```{r}
+vif(lm(Clay5 ~ CEC1 + OC1 + Clay2 + CEC2 + OC2, data=soil))
+vif(lm(Clay5 ~ Clay1 + OC1 + Clay2 + CEC2 + OC2, data=soil))
+vif(lm(Clay5 ~ Clay1 + CEC1 + Clay2 + CEC2 + OC2, data=soil))
+vif(lm(Clay5 ~ Clay1 + CEC1 + OC1 + CEC2 + OC2, data=soil))
+vif(lm(Clay5 ~ Clay1 + CEC1 + OC1 + Clay2 + OC2, data=soil))
+vif(lm(Clay5 ~ Clay1 + CEC1 + OC1 + Clay2 + CEC2, data=soil))
+```
 
+```{r}
+
+```
+
+
+
+## 26. What is the best model to predict Clay 5? Why?
+Considering all variables,
+
+Clay5 ~ CEC1 + OC1 + Clay2 + CEC2 + OC2
+and
+Clay5 ~ Clay1 + CEC1 + OC1 + Clay2 + OC2
+
+have the lowest VIF among all the options. Because VIF measures for multicollinearity, having low VIF values is idea. Because of the very high (>10) VIF values in several of the models for Clay1, i would judge the Clay5 ~ CEC1 + OC1 + Clay2 + CEC2 + OC to be the best option of these. Clay1 and Clay2 seem to be very correlated. these two variables have very high VIF when they are both in the model. 
 
 
 
